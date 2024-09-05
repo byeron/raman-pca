@@ -82,7 +82,10 @@ def scatter_pca(df: pd.DataFrame, axes: list, output: str):
     help="Exclude preweight index",
 )
 @click.option(
-    "--exclude-transform", "-et", multiple=True, help="Exclude transform index",
+    "--exclude-transform",
+    "-et",
+    multiple=True,
+    help="Exclude transform index",
 )
 @click.pass_context
 def cmd(ctx, standardize, exclude_preweights, exclude_transform):
@@ -103,7 +106,7 @@ def run(ctx, path):
 
     df = pd.read_csv(path, header=0, index_col=0)
     click.echo(df)
-    click.echo(df.index.unique())
+    # click.echo(df.index.unique())
 
     if standardize:
         df = standardize_data(df)
