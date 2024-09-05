@@ -113,9 +113,44 @@ def run(ctx, path):
 
     pca = fit_pca(df, list(exclude_preweights))
     transformed = transform_pca(df, pca, list(exclude_transform))
-    click.echo(transformed)
+    # click.echo(transformed)
 
-    return transformed
+    return transformed, pca
+
+
+@cmd.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--axis", "-ax", type=int, default=1, help="Display PC{N}'s weight")
+@click.option("--num", "-n", type=int, default=10, help="Display the top N weights")
+@click.pass_context
+def weights(ctx, path, axis, num):
+
+    df = pd.read_csv(path, header=0, index_col=0)
+    transformed, pca = ctx.invoke(run, path=path)
+
+    # 各変数の重み（固有ベクトル）を表示
+    weights = pd.DataFrame(
+        pca.components_,
+        columns=df.columns,
+        index=[f"PC{i}" for i in range(1, len(transformed.columns) + 1)],
+    )
+
+    # PC{axis}の重みを絶対値にして降順に表示
+    click.echo(f"PC{axis}'s weight, top {num}")
+    click.echo(weights.loc[f"PC{axis}"].abs().sort_values(ascending=False).head(num))
+
+
+@cmd.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.pass_context
+def explained(ctx, path):
+    transformed, pca = ctx.invoke(run, path=path)
+    explained_variance_ratio = pca.explained_variance_ratio_
+    for i, ratio in enumerate(explained_variance_ratio):
+        click.echo(f"PC{i + 1}:\t{ratio:.2f}")
+        if ratio < 0.01:
+            click.echo(f"Since the contribution rate of PC{i + 1} is less than 1%, subsequent components will be ignored.")
+            break
 
 
 @cmd.command()
@@ -124,7 +159,7 @@ def run(ctx, path):
 @click.option("--pca-axes", "-ax", type=int, multiple=True, default=[1, 2])
 @click.pass_context
 def scatter(ctx, path, output, pca_axes):
-    transformed = ctx.invoke(run, path=path)
+    transformed, _ = ctx.invoke(run, path=path)
 
     if len(pca_axes) != 2:
         raise ValueError("scatter-axes must be a list of length 2")
