@@ -30,10 +30,13 @@ poetry run python main.py explained data/hoge.csv
 ### 任意の主成分軸における各変数の重み
 - ax: 主成分軸
 - n: 上位n個までの変数とその重みを出力
+- o: 出力パス
 ```bash
 # PC1 における重みが高い変数を上位20個まで出力する
-poetry run python main.py weights data/hoge.csv -ax 1 -n 20
+poetry run python main.py weights data/hoge.csv -ax 1 -n 20 -o weights.png
 ```
+また、各変数の重みと隣接する変数間の重みの差分を可視化する
+
 
 ### 次元圧縮後の散布図
 - ax: 主成分軸（2軸を指定）
