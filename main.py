@@ -67,9 +67,32 @@ def scatter_pca(df: pd.DataFrame, axes: list, output: str):
     fig.savefig(output)
 
 
+def plot_weights(data: pd.Series, output_path: str):
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(2, 1, 1)
+    ax.set_xlabel("variable")
+    ax.set_ylabel("weights")
+
+    ax.bar(data.index, data.to_numpy(), )
+    ax.grid(axis="y")
+    for label in ax.get_xticklabels():
+        label.set_rotation(90)
+
+    ax = fig.add_subplot(2, 1, 2)
+    ax.plot((data - data.shift(periods=1)).abs())
+    ax.grid()
+    for label in ax.get_xticklabels():
+        label.set_rotation(90)
+    ax.set_xlabel("variable")
+    ax.set_ylabel("$|w_{i} - w_{i-1}|$")
+    plt.tight_layout()
+    fig.savefig(output_path)
+
+
 @click.group()
 @click.option(
     "--standardize",
+    "-std",
     required=False,
     is_flag=True,
     default=False,
@@ -105,6 +128,7 @@ def run(ctx, path):
     exclude_transform = options["exclude_transform"]
 
     df = pd.read_csv(path, header=0, index_col=0)
+    click.echo("> Raw data")
     click.echo(df)
     # click.echo(df.index.unique())
 
@@ -113,7 +137,8 @@ def run(ctx, path):
 
     pca = fit_pca(df, list(exclude_preweights))
     transformed = transform_pca(df, pca, list(exclude_transform))
-    # click.echo(transformed)
+    click.echo("> Transformed to PCA")
+    click.echo(transformed)
 
     return transformed, pca
 
@@ -122,8 +147,9 @@ def run(ctx, path):
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--axis", "-ax", type=int, default=1, help="Display PC{N}'s weight")
 @click.option("--num", "-n", type=int, default=10, help="Display the top N weights")
+@click.option("--output", "-o", type=click.Path(), default="img/weights.png")
 @click.pass_context
-def weights(ctx, path, axis, num):
+def weights(ctx, path, axis, num, output):
 
     df = pd.read_csv(path, header=0, index_col=0)
     transformed, pca = ctx.invoke(run, path=path)
@@ -136,8 +162,9 @@ def weights(ctx, path, axis, num):
     )
 
     # PC{axis}の重みを絶対値にして降順に表示
-    click.echo(f"PC{axis}'s weight, top {num}")
+    click.echo(f"> PC{axis}'s weight, top {num}")
     click.echo(weights.loc[f"PC{axis}"].abs().sort_values(ascending=False).head(num))
+    plot_weights(weights.loc[f"PC{axis}"].abs().sort_values(ascending=False).head(num), output)
 
 
 @cmd.command()
