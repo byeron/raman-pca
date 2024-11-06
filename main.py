@@ -70,6 +70,7 @@ def scatter_pca(df: pd.DataFrame, axes: list, output: str):
 @click.group()
 @click.option(
     "--standardize",
+    "-std",
     required=False,
     is_flag=True,
     default=False,
@@ -105,6 +106,7 @@ def run(ctx, path):
     exclude_transform = options["exclude_transform"]
 
     df = pd.read_csv(path, header=0, index_col=0)
+    click.echo("> Raw data")
     click.echo(df)
     # click.echo(df.index.unique())
 
@@ -113,7 +115,8 @@ def run(ctx, path):
 
     pca = fit_pca(df, list(exclude_preweights))
     transformed = transform_pca(df, pca, list(exclude_transform))
-    # click.echo(transformed)
+    click.echo("> Transformed to PCA")
+    click.echo(transformed)
 
     return transformed, pca
 
@@ -136,7 +139,7 @@ def weights(ctx, path, axis, num):
     )
 
     # PC{axis}の重みを絶対値にして降順に表示
-    click.echo(f"PC{axis}'s weight, top {num}")
+    click.echo(f"> PC{axis}'s weight, top {num}")
     click.echo(weights.loc[f"PC{axis}"].abs().sort_values(ascending=False).head(num))
 
 
